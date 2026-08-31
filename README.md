@@ -16,6 +16,20 @@
 - 🧪 **日志定位（logtest）**：侧边栏独立面板，粘贴一条日志实时测试命中哪条规则，点击直接跳转该规则依赖链
 - ⚙️ 连接配置通过 `.env` 修改（`WAZUH_HOST` 等）
 
+## 界面预览
+
+**首页分组总览** 
+
+<img title="" src="./screenshots/home.png" alt="" width="600" style="zoom:100%;">
+
+**搜索规则**
+
+<img title="" src="./screenshots/search.png" alt="" width="600">
+
+**图谱视图**
+
+<img title="" src="./screenshots/graph.png" alt="" width="600">
+
 ## 环境要求
 
 - **Wazuh Manager 4.x**：需提供 REST API（默认端口 `55000`）。部署方式无关 —— OVA 一体化镜像、Docker、rpm/deb 包安装、分布式集群（manager 节点）均可，只要 API 可达即可连接
@@ -76,6 +90,7 @@ python scripts/test_api.py --limit 10
 **方式一：一键启动（推荐）**
 
 直接双击项目根目录下的 `start.bat`：
+
 - 自动检查 Python 依赖，缺失则自动安装
 - 自动启动服务，并在 3 秒后自动打开默认浏览器
 - 按 Ctrl+C 或关闭窗口即可停止服务
@@ -129,20 +144,20 @@ wazuh-rule-visualizer/
 
 ## API 接口
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/status` | 连接状态检查 |
-| GET | `/api/config` | 获取当前连接配置 |
-| POST | `/api/config` | 动态修改连接配置并重连 |
-| GET | `/api/overview` | 分组大类总览（首页），优先读本地缓存 |
-| POST | `/api/update` | 重新全量拉取 Wazuh 规则并覆盖本地缓存 |
-| GET | `/api/rules?q=&group=&level_min=&level_max=&limit=&offset=` | 规则列表（查询结果），读缓存 |
-| GET | `/api/rule/<id>` | 规则详情，读缓存 |
-| GET | `/api/rule/<id>/xml` | 单条规则的 XML 定义 + 文件位置（文件内容本地缓存） |
-| GET | `/api/rule/<id>/file` | 规则所在文件的完整 XML（本地缓存） |
-| POST | `/api/rule/<id>/file/refresh` | 强制刷新该规则文件缓存 |
-| GET | `/api/graph?rule_id=&depth=&groups=&q=` | 受控子图（依赖链 / 分组 / 关键词） |
-| POST | `/api/test` | logtest 日志匹配测试 |
+| 方法   | 路径                                                          | 说明                            |
+| ---- | ----------------------------------------------------------- | ----------------------------- |
+| GET  | `/api/status`                                               | 连接状态检查                        |
+| GET  | `/api/config`                                               | 获取当前连接配置                      |
+| POST | `/api/config`                                               | 动态修改连接配置并重连                   |
+| GET  | `/api/overview`                                             | 分组大类总览（首页），优先读本地缓存            |
+| POST | `/api/update`                                               | 重新全量拉取 Wazuh 规则并覆盖本地缓存        |
+| GET  | `/api/rules?q=&group=&level_min=&level_max=&limit=&offset=` | 规则列表（查询结果），读缓存                |
+| GET  | `/api/rule/<id>`                                            | 规则详情，读缓存                      |
+| GET  | `/api/rule/<id>/xml`                                        | 单条规则的 XML 定义 + 文件位置（文件内容本地缓存） |
+| GET  | `/api/rule/<id>/file`                                       | 规则所在文件的完整 XML（本地缓存）           |
+| POST | `/api/rule/<id>/file/refresh`                               | 强制刷新该规则文件缓存                   |
+| GET  | `/api/graph?rule_id=&depth=&groups=&q=`                     | 受控子图（依赖链 / 分组 / 关键词）          |
+| POST | `/api/test`                                                 | logtest 日志匹配测试                |
 
 ## 数据缓存机制
 
