@@ -1,0 +1,28 @@
+# ===== 环境变量（含敏感信息，绝不上传） =====
+.env
+
+# ===== 本地缓存数据（运行时自动生成） =====
+data/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# ===== 编辑器 / IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+*.log

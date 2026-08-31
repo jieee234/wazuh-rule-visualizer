@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wazuh 规则依赖关系可视化</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/d3.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <header>
+        <div class="brand">
+            <h1>🔗 Wazuh 规则依赖可视化</h1>
+            <div id="status"><span id="status-dot" class="dot red"></span><span id="status-text">未连接</span></div>
+        </div>
+        <div class="header-right">
+            <span id="cache-time" class="cache-info" title="本地数据缓存更新时间">缓存：-</span>
+            <button id="update-btn" class="btn btn-primary btn-sm" title="从 Wazuh 重新拉取全部规则并写入本地缓存">🔄 更新数据</button>
+        </div>
+    </header>
+
+    <div id="main">
+        <aside id="sidebar">
+            <!-- 统一搜索 / 定位 -->
+            <div class="panel accent">
+                <h3>🔍 搜索规则</h3>
+                <input type="text" id="search-input" placeholder="规则ID / 描述关键词 / 分组 / 文件名...">
+                <div id="search-meta" class="muted"></div>
+                <div id="search-results" class="result-list"></div>
+            </div>
+
+            <!-- 日志定位（logtest，实时 Wazuh 测试） -->
+            <div class="panel">
+                <h3>🧪 日志定位</h3>
+                <textarea id="logtest-input" rows="3" placeholder="粘贴一条日志，测试会命中哪条规则（需 Wazuh 在线）..."></textarea>
+                <button id="logtest-btn" class="btn btn-primary btn-sm btn-block">测试命中规则</button>
+                <div id="logtest-result" class="muted"></div>
+            </div>
+
+            <!-- 数据状态 -->
+            <div class="panel">
+                <h3>📦 本地数据</h3>
+                <div id="stats">
+                    <p>规则总数: <span id="total-rules">-</span></p>
+                    <p>分组类别: <span id="group-count">-</span></p>
+                    <p>缓存时间: <span id="cache-detail">-</span></p>
+                    <p class="sub" id="load-message">首次打开会自动全量拉取并缓存到本地</p>
+                </div>
+            </div>
+
+            <!-- 规则详情 -->
+            <div class="panel">
+                <h3>📋 规则详情</h3>
+                <div id="rule-detail"><p class="muted">点击规则查看详情</p></div>
+            </div>
+        </aside>
+
+        <div id="content">
+            <!-- 面包屑 -->
+            <div id="breadcrumb"></div>
+
+            <!-- 首页：分组列表（分页） -->
+            <div id="overview-view">
+                <div class="view-head">
+                    <h2>分组类别</h2>
+                    <span id="overview-meta" class="muted"></span>
+                    <div class="view-actions">
+                        <input type="text" id="overview-search" class="search-inline" placeholder="搜索分组名...">
+                    </div>
+                </div>
+                <div id="group-grid" class="group-grid"></div>
+                <div id="overview-pager" class="pager"></div>
+            </div>
+
+            <!-- 分组详情：规则列表（分页） -->
+            <div id="group-view" class="hidden">
+                <div class="view-head">
+                    <h2 id="group-title"></h2>
+                    <span id="group-meta" class="muted"></span>
+                    <div class="view-actions">
+                        <input type="text" id="group-search" class="search-inline" placeholder="搜索规则ID / 描述...">
+                        <button id="group-graph-btn" class="btn btn-ghost btn-xs">查看图谱</button>
+                    </div>
+                </div>
+                <div id="group-rule-list" class="rule-list"></div>
+                <div id="group-pager" class="pager"></div>
+            </div>
+
+            <!-- 规则详情：依赖树 -->
+            <div id="rule-view" class="hidden">
+                <div class="view-head">
+                    <h2 id="rule-title"></h2>
+                    <div class="view-actions">
+                        <button id="rule-graph-btn" class="btn btn-ghost btn-xs">查看图谱</button>
+                    </div>
+                </div>
+                <div id="rule-info-card" class="rule-info-card"></div>
+                <h3 class="section-title">⬆️ 上游触发链条（点开逐层钻取）</h3>
+                <div id="rule-tree" class="tree-container"></div>
+                <div id="tree-tip" class="muted sub">▸ 展开依赖 · 点击规则/分组可跳转 · 分组内只显示前 10 条，点"查看全部"进入分组详情页</div>
+            </div>
+
+            <!-- 图谱视图（辅助） -->
+            <div id="graph-view" class="hidden">
+                <div id="graph-toolbar">
+                    <span id="graph-desc" class="muted">-</span>
+                    <label class="inline-label" title="是否显示规则归属分组的边"><input type="checkbox" id="show-member"> 显示归属边</label>
+                    <button id="clear-view-btn" class="btn btn-ghost btn-xs">返回</button>
+                </div>
+                <svg id="graph-svg">
+                    <defs>
+                        <marker id="arrowR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e"/></marker>
+                        <marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3fb950"/></marker>
+                        <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"/></marker>
+                        <marker id="arrowM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6e7681"/></marker>
+                    </defs>
+                </svg>
+                <div id="graph-empty" class="hidden">
+                    <p>未选择展示内容</p>
+                    <p class="sub">请先选择分组或规则</p>
+                </div>
+                <div id="loading-mask" class="hidden">
+                    <div class="spinner"></div>
+                    <p id="loading-text">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="tooltip" style="display:none;"></div>
+
+    <!-- XML 定义模态框 -->
+    <div id="xml-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3 id="xml-modal-title">规则 XML 定义</h3>
+                <div class="modal-head-actions">
+                    <button id="xml-refresh-btn" class="btn btn-ghost btn-xs">🔄 刷新文件</button>
+                    <button id="xml-modal-close" class="btn btn-ghost btn-xs">✕ 关闭</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="xml-file-info">
+                    <span class="label">文件位置:</span>
+                    <code id="xml-file-path">-</code>
+                    <button id="xml-copy-path" class="btn btn-ghost btn-xs">复制路径</button>
+                    <span id="xml-cache-info" class="muted" style="font-size:11px;"></span>
+                </div>
+                <div class="xml-tabs">
+                    <button class="xml-tab active" data-tab="rule">单条规则</button>
+                    <button class="xml-tab" data-tab="file">完整文件</button>
+                </div>
+                <pre id="xml-content" class="xml-content">加载中...</pre>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

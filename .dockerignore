@@ -1,0 +1,26 @@
+# 环境变量与敏感信息
+.env
+
+# 本地缓存数据
+data/
+
+# Git
+.git
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# 开发脚本（容器内不需要）
+start.bat
+scripts/test_api.py
+scripts/selftest.py

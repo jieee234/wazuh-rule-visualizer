@@ -1,0 +1,13 @@
+# 统一换行符：文本文件按平台自动转换，代码文件强制 LF
+* text=auto
+
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf

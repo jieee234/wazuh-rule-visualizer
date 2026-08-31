@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  wazuh-rule-visualizer:
+    build: .
+    container_name: wazuh-rule-visualizer
+    ports:
+      - "5000:5000"
+    environment:
+      - WAZUH_HOST=${WAZUH_HOST:-your-wazuh-host}
+      - WAZUH_PORT=${WAZUH_PORT:-55000}
+      - WAZUH_USERNAME=${WAZUH_USERNAME:-wazuh}
+      - WAZUH_PASSWORD=${WAZUH_PASSWORD:-wazuh}
+      - RULE_LIMIT=${RULE_LIMIT:-100}
+      - FETCH_ALL_RULES=${FETCH_ALL_RULES:-False}
+      - FLASK_PORT=5000
+    restart: unless-stopped
